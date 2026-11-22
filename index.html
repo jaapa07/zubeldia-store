@@ -275,6 +275,11 @@ fieldset.field{border:0;padding:0;margin:0}
 .logo-thumb{aspect-ratio:1/1!important;border-radius:50%!important;padding:0}
 .logo-thumb .small{font-size:.72rem;text-align:center}
 @media (max-width:760px){.hero-c{padding-top:30px}}
+
+.igd{width:min(480px,calc(100% - 28px));border-radius:18px;margin:auto}
+.igd-body{padding:18px 20px 22px;display:flex;flex-direction:column;gap:14px}
+.igd-body p{margin:0}
+.igd textarea{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--well);padding:12px;font:inherit;font-size:.92rem;line-height:1.45;resize:vertical;color:var(--ink)}
 /* ===== Vitrine ===== */
 :root{--display:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;--body:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
   --bg:#FBFAF9;--surface:#FFFFFF;--well:#F1EFEC;--ink:#101012;--ink-2:#64626A;--line:rgba(16,16,18,.1);
@@ -589,6 +594,7 @@ fieldset.field{border:0;padding:0;margin:0}
       '<dialog class="pm" id="pm" aria-label="Camisa"></dialog>' +
       '<dialog class="drawer" id="bag" aria-label="Sacola"></dialog>' +
       '<dialog class="drawer wide" id="admin" aria-label="Gerenciar loja"></dialog>' +
+      '<dialog class="igd" id="igd" aria-label="Finalizar pelo Instagram"></dialog>' +
       '<div class="savebar" id="savebar" hidden></div>' +
       '<div class="toast" id="toast" role="status" aria-live="polite"></div>';
   }
@@ -747,14 +753,27 @@ fieldset.field{border:0;padding:0;margin:0}
   function sendOrder(text) {
     var wa = waNumber();
     if (wa) { openExternal('https://wa.me/' + wa + '?text=' + encodeURIComponent(text)); return; }
-    var ig = instaUser();
-    var go = function (copied) {
-      toast(copied ? 'Pedido copiado. Cole na conversa do Instagram.' : 'Envie o nome da camisa e o tamanho na conversa do Instagram.');
-      if (ig) openExternal('https://ig.me/m/' + ig);
-    };
-    try { navigator.clipboard.writeText(text).then(function () { go(true); }, function () { go(false); }); } catch (e) { go(false); }
+    openIgDialog(text);
   }
-
+  function copyText(text) {
+    var ok = false, ta = $('#igText');
+    if (ta) {
+      try { ta.focus(); ta.setSelectionRange(0, ta.value.length); ok = document.execCommand('copy'); } catch (e) {}
+      try { ta.blur(); } catch (e) {}
+    }
+    try { if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {}); } catch (e) {}
+    return ok;
+  }
+  function openIgDialog(text) {
+    var ig = instaUser();
+    ['pm', 'bag'].forEach(function (id) { if ($('#' + id).open) closeDialog($('#' + id)); });
+    $('#igd').innerHTML = '<div class="dr-head"><h2>Finalizar pelo Instagram</h2><button class="x" data-action="close" aria-label="Fechar">' + I.close + '</button></div>' +
+      '<div class="igd-body"><p>O Instagram não deixa a mensagem chegar pronta, então o seu pedido vai copiado. Na conversa, é só colar e enviar.</p>' +
+      '<label class="sr" for="igText">Seu pedido</label><textarea id="igText" rows="7">' + esc(text) + '</textarea>' +
+      '<a class="btn btn-red btn-wide" data-action="ig-go" href="https://ig.me/m/' + esc(ig) + '" target="_blank" rel="noopener">' + I.insta + ' Copiar e abrir o Instagram</a>' +
+      '<p class="small">No Instagram, toque e segure no campo de mensagem e escolha <b>Colar</b>.</p></div>';
+    showDialog($('#igd'));
+  }
   /* ---------- diálogos ---------- */
   function showDialog(d) {
     if (d.open) return;
@@ -1024,6 +1043,7 @@ fieldset.field{border:0;padding:0;margin:0}
       case 'go-shop': closeDialog($('#bag')); setTimeout(function () { $('#camisas').scrollIntoView(); }, 50); break;
       case 'bag-qty': { var it = bagKeyed()[k]; if (it) { it.qty = Math.max(1, Math.min(20, it.qty + dd)); store('zb-cart', cart); renderBag(); renderBagCount(); } break; }
       case 'bag-rm': { var it2 = bagKeyed()[k]; cart = cart.filter(function (i) { return i !== it2; }); store('zb-cart', cart); renderBag(); renderBagCount(); break; }
+      case 'ig-go': { var ok = copyText($('#igText').value); setTimeout(function () { toast(ok ? 'Pedido copiado. Cole na conversa do Instagram.' : 'Copie o texto do pedido e cole na conversa.'); }, 300); return; }
       case 'checkout': sendOrder(orderMessage(cartItems())); break;
       case 'open-admin': ui.form = null; renderAdmin(); showDialog($('#admin')); renderSavebar(); break;
       case 'tab': if (ui.tab === 'config') readSettings(); ui.tab = t.getAttribute('data-tab'); renderAll(); renderAdmin(); break;
@@ -1065,7 +1085,7 @@ fieldset.field{border:0;padding:0;margin:0}
 
   /* ---------- início ---------- */
   skeleton();
-  ['pm', 'bag', 'admin'].forEach(function (id) { $('#' + id).addEventListener('close', onDialogClose); });
+  ['pm', 'bag', 'admin', 'igd'].forEach(function (id) { $('#' + id).addEventListener('close', onDialogClose); });
   renderAll();
 
   function checkAdminHash() { if (location.hash === '#admin') enableStandalone(); }
