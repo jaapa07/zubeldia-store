@@ -9,12 +9,26 @@ function senhaCerta(enviada, certa) {
 }
 
 module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).json({ erro: 'metodo' });
   const SENHA = process.env.ADMIN_SENHA;
   const TOKEN = process.env.GITHUB_TOKEN;
   const REPO = process.env.GITHUB_REPO || 'jaapa07/zubeldia-store';
   const BRANCH = process.env.GITHUB_BRANCH || 'main';
-  if (!SENHA || !TOKEN) return res.status(500).json({ erro: 'config' });
+  const falta = [];
+  if (!TOKEN) falta.push('GITHUB_TOKEN');
+  if (!SENHA) falta.push('ADMIN_SENHA');
+
+  // Abrir /api/publicar no navegador mostra se a configuração chegou (sem mostrar os valores).
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      GITHUB_TOKEN: TOKEN ? 'encontrado' : 'NÃO encontrado',
+      ADMIN_SENHA: SENHA ? 'encontrado' : 'NÃO encontrado',
+      ambiente: process.env.VERCEL_ENV || 'desconhecido',
+      publicacao: process.env.VERCEL_URL || 'desconhecida',
+      projeto: process.env.VERCEL_PROJECT_PRODUCTION_URL || 'desconhecido'
+    });
+  }
+  if (req.method !== 'POST') return res.status(405).json({ erro: 'metodo' });
+  if (falta.length) return res.status(500).json({ erro: 'config', falta: falta });
 
   const corpo = req.body || {};
   if (!senhaCerta(corpo.senha, SENHA)) return res.status(401).json({ erro: 'senha' });
