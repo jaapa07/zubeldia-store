@@ -301,6 +301,27 @@ fieldset.field{border:0;padding:0;margin:0}
   .pm-info{position:relative;z-index:1;margin-top:-22px;border-radius:22px 22px 0 0;background:var(--surface);padding:24px 20px calc(26px + env(safe-area-inset-bottom,0px));gap:12px}
   .pm-info h2{font-size:1.5rem}
 }
+/* logo no topo */
+.brand{flex-direction:row;gap:10px}
+.brand .brand-word{display:inline-flex;flex-direction:column;align-items:center;line-height:1;font-style:normal}
+.brand-logo{width:46px;height:46px;border-radius:50%;object-fit:cover;flex:none}
+.foot .brand-logo{width:56px;height:56px}
+/* edição na tela */
+.editbar{position:fixed;left:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:45;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:0 10px 30px -10px rgba(0,0,0,.35);max-width:calc(100% - 24px)}
+.editbar[hidden]{display:none}
+.editbar p{margin:0 4px;font-size:.86rem}
+.editbar.on{border-color:var(--red)}
+.savebar:not([hidden]) ~ .editbar{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+.editing [data-edit]{outline:2px dashed var(--red);outline-offset:3px;border-radius:4px;cursor:text;min-width:1ch;display:inline-block}
+.editing .announce[data-edit]{display:block;outline-offset:-4px}
+.editing [data-edit]:focus{outline-style:solid;background:rgba(200,16,46,.06)}
+.editing .vcard,.editing .card{outline:2px dashed transparent;outline-offset:4px;border-radius:16px}
+.editing .vcard:hover,.editing .card:hover{outline-color:var(--red)}
+.leave{display:block;margin:0 0 12px}
+
+.editbar:not([hidden]) ~ .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.savebar:not([hidden]) ~ .editbar:not([hidden]) ~ .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.pub p{font-size:.84rem;line-height:1.3}
 /* ===== Vitrine ===== */
 :root{--display:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;--body:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
   --bg:#FBFAF9;--surface:#FFFFFF;--well:#F1EFEC;--ink:#101012;--ink-2:#64626A;--line:rgba(16,16,18,.1);
@@ -591,9 +612,9 @@ fieldset.field{border:0;padding:0;margin:0}
         '</section>';
     }
     if (VARIANT === 'vitrine') {
-      return '<section class="vit-hero"><div class="wrap vit-in"><div class="vit-copy"><h1>Torça com estilo.</h1><p>' + lead + '</p>' +
-        '<div class="vit-cta"><a class="btn btn-ink" href="#camisas">Ver camisas</a><a class="btn btn-plain" href="#duvidas">Como comprar</a></div>' +
-        '<ul class="vit-perks"><li><b id="vPix"></b> no Pix</li><li><b id="vInst"></b> sem juros</li><li><b>Brasil todo</b> com rastreio</li></ul></div>' +
+      return '<section class="vit-hero"><div class="wrap vit-in"><div class="vit-copy"><h1>' + txt('heroTitle', 'Torça com estilo.') + '</h1><p>' + txt('heroLead', lead) + '</p>' +
+        '<div class="vit-cta"><a class="btn btn-ink" href="#camisas">' + txt('ctaMain', 'Ver camisas') + '</a><a class="btn btn-plain" href="#duvidas">' + txt('ctaHow', 'Como comprar') + '</a></div>' +
+        '<ul class="vit-perks"><li><b id="vPix"></b> no Pix</li><li><b id="vInst"></b> sem juros</li><li>' + txt('perkShip', 'Brasil todo com rastreio') + '</li></ul></div>' +
         '<div class="vit-fan" id="vitFan"></div></div></section>' + finalHtml();
     }
     if (VARIANT === 'vestiario') {
@@ -608,10 +629,10 @@ fieldset.field{border:0;padding:0;margin:0}
     if (Date.now() > FINAL_END) return '';
     var u = function (id, l) { return '<div class="fu"><span class="fn" id="' + id + '">00</span><span class="fl">' + l + '</span></div>'; };
     return '<section class="final" id="finalBox" aria-labelledby="finalTitle"><div class="wrap final-in">' +
-      '<div class="final-copy"><h2 id="finalTitle">Palmeiras x Estudiantes</h2><p>Final da Libertadores, sábado, 28 de novembro, às 17h (Brasília), no Estádio Centenário.</p></div>' +
+      '<div class="final-copy"><h2 id="finalTitle">' + txt('finalTitle', 'Palmeiras x Estudiantes') + '</h2><p>' + txt('finalText', 'Final da Libertadores, sábado, 28 de novembro, às 17h (Brasília), no Estádio Centenário.') + '</p></div>' +
       '<div class="final-clock" id="finalClock" role="timer">' + u('fd', 'dias') + u('fh', 'horas') + u('fm', 'min') + u('fs', 'seg') + '</div>' +
       '<p class="final-live" id="finalLive" hidden>A bola está rolando em Montevidéu. Vai, Palmeiras!</p>' +
-      '<button class="btn final-btn" data-action="palmeiras">Ver camisas do Palmeiras</button></div></section>';
+      '<button class="btn final-btn" data-action="palmeiras">' + txt('finalBtn', 'Ver camisas do Palmeiras') + '</button></div></section>';
   }
   function tickFinal() {
     var box = $('#finalBox'); if (!box) return;
@@ -657,11 +678,17 @@ fieldset.field{border:0;padding:0;margin:0}
       }).join('');
     }
   }
-  function brand() { return '<b>ZUBELDIA</b><span>STORE</span>'; }
+  function txt(key, def) {
+    var t = state.settings.texts || {};
+    return '<span data-edit="' + key + '">' + esc(t[key] != null && t[key] !== '' ? t[key] : def) + '</span>';
+  }
+  function brand() {
+    return (validPhoto(state.settings.logo) ? '<img class="brand-logo" src="' + esc(state.settings.logo) + '" alt="">' : '') + '<i class="brand-word"><b>ZUBELDIA</b><span>STORE</span></i>';
+  }
 
   function skeleton() {
     $('#app').innerHTML =
-      '<div class="announce" id="announce"></div>' +
+      '<div class="announce" id="announce" data-edit="announcement"></div>' +
       '<header class="top"><div class="wrap top-in">' +
         '<a class="brand" href="#inicio" aria-label="Zubeldia Store, início">' + brand() + '</a>' +
         '<label class="search">' + I.search + '<span class="sr">Buscar</span><input id="q" type="search" placeholder="Buscar time ou seleção" autocomplete="off"></label>' +
@@ -672,19 +699,20 @@ fieldset.field{border:0;padding:0;margin:0}
         heroHtml() +
         '<section class="wrap shop" id="camisas"><div class="shop-head"><h2 id="shopTitle">Camisas</h2><span id="shopCount"></span>' + (VARIANT === 'vitrine' ? '<label class="sort"><span class="sr">Ordenar</span><select id="sort"><option value="destaque">Destaques</option><option value="menor">Menor preço</option><option value="desconto">Maior desconto</option></select></label>' : '') + '</div><div class="chips" id="chips"></div><div class="grid" id="grid"></div></section>' +
         '<section class="wrap info">' +
-          '<div id="entregas"><h3>Entregas</h3><div id="deliveryText"></div></div>' +
-          '<div id="medidas"><h3>Guia de medidas</h3><div class="measures"><table><thead><tr><th>Tamanho</th><th>Largura</th><th>Altura</th></tr></thead><tbody>' +
+          '<div id="entregas"><h3>' + txt('tDelivery', 'Entregas') + '</h3><div id="deliveryText"></div></div>' +
+          '<div id="medidas"><h3>' + txt('tMeasures', 'Guia de medidas') + '</h3><div class="measures"><table><thead><tr><th>Tamanho</th><th>Largura</th><th>Altura</th></tr></thead><tbody>' +
             [['P', 50, 70], ['M', 52, 72], ['G', 54, 74], ['GG', 56, 76], ['XGG', 58, 78]].map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + ' cm</td><td>' + r[2] + ' cm</td></tr>'; }).join('') +
-            '</tbody><caption>Medidas da camisa aberta, versão torcedor. Podem variar até 2 cm.</caption></table></div></div>' +
-          '<div id="duvidas" class="faq"><h3>Dúvidas</h3><div id="faqList"></div></div>' +
+            '</tbody><caption>' + txt('measureNote', 'Medidas da camisa aberta, versão torcedor. Podem variar até 2 cm.') + '</caption></table></div></div>' +
+          '<div id="duvidas" class="faq"><h3>' + txt('tFaq', 'Dúvidas') + '</h3><div id="faqList"></div></div>' +
         '</section>' +
       '</main>' +
-      '<footer><div class="wrap foot"><div><a class="brand" href="#inicio" aria-label="Zubeldia Store, início">' + brand() + '</a></div><nav id="footLinks" aria-label="Contato"></nav><p>© 2026 Zubeldia Store</p></div></footer>' +
+      '<footer><div class="wrap foot"><div><a class="brand" href="#inicio" aria-label="Zubeldia Store, início">' + brand() + '</a></div><nav id="footLinks" aria-label="Contato"></nav><p>' + txt('footer', '© 2026 Zubeldia Store') + '</p></div></footer>' +
       '<dialog class="pm" id="pm" aria-label="Camisa"></dialog>' +
       '<dialog class="drawer" id="bag" aria-label="Sacola"></dialog>' +
       '<dialog class="drawer wide" id="admin" aria-label="Gerenciar loja"></dialog>' +
       '<dialog class="igd" id="igd" aria-label="Finalizar pelo Instagram"></dialog>' +
       '<div class="savebar" id="savebar" hidden></div>' +
+      '<div class="editbar" id="editbar" hidden></div>' +
       '<div class="toast" id="toast" role="status" aria-live="polite"></div>';
   }
 
@@ -748,7 +776,9 @@ fieldset.field{border:0;padding:0;margin:0}
   function renderInfo() {
     renderHero();
     var s = state.settings;
-    var a = $('#announce'); a.textContent = s.announcement || '';
+    var a = $('#announce'); if (!a.isContentEditable) a.textContent = s.announcement || '';
+    if (ui.editMode) a.textContent = a.textContent || 'Escreva um aviso';
+    Array.prototype.forEach.call(document.querySelectorAll('.brand'), function (b) { var h = brand(); if (b.getAttribute('data-h') !== h) { b.innerHTML = h; b.setAttribute('data-h', h); } });
     $('#deliveryText').innerHTML = String(s.delivery || '').split(/\n\s*\n/).filter(Boolean).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('');
     $('#faqList').innerHTML = (s.faq || []).filter(function (f) { return f.q; }).map(function (f) {
       return '<details><summary>' + esc(f.q) + '</summary><p>' + esc(f.a) + '</p></details>';
@@ -881,7 +911,7 @@ fieldset.field{border:0;padding:0;margin:0}
   }
   function pubBar() {
     if (!dirty()) return '';
-    if (ui.standalone) { try { localStorage.setItem('zb-rascunho', JSON.stringify(state)); } catch (e) {} }
+    if (ui.standalone) { try { localStorage.setItem('zb-rascunho', JSON.stringify({ base: draftKey(), state: state })); } catch (e) {} }
     return '<div class="pub"><p>' + (ui.publishing ? 'Publicando…' : 'Alterações ainda não publicadas') + '</p><div class="btns">' +
       '<button class="btn btn-line btn-sm" data-action="discard"' + (ui.publishing ? ' disabled' : '') + '>Descartar</button>' +
       (ui.standalone ? '<button class="btn btn-line btn-sm" data-action="download"' + (ui.publishing ? ' disabled' : '') + '>Baixar</button>' : '') +
@@ -914,7 +944,7 @@ fieldset.field{border:0;padding:0;margin:0}
     });
   }
   function productList() {
-    return '<p class="note">' + (ui.standalone ? 'Suas mudanças aparecem só para você até tocar em Publicar. Depois de publicar, a loja atualiza para todos em cerca de 1 minuto.' : 'Suas mudanças aparecem para você na hora. Os clientes só veem depois que você tocar em Publicar.') + '</p>' +
+    return (ui.standalone ? '<button class="linkbtn leave" data-action="leave-admin">Sair do modo lojista neste aparelho</button>' : '') + '<p class="note">' + (ui.standalone ? 'Suas mudanças aparecem só para você até tocar em Publicar. Depois de publicar, a loja atualiza para todos em cerca de 1 minuto.' : 'Suas mudanças aparecem para você na hora. Os clientes só veem depois que você tocar em Publicar.') + '</p>' +
       '<button class="btn btn-red btn-wide" data-action="new-product">Adicionar camisa</button>' +
       '<ul class="adm-list">' + state.products.map(function (p, k) {
         return '<li class="adm-row"><div class="thumb">' + visual(p) + '</div><div><h3>' + esc(p.name) + '</h3><p>' + priceLabel(p) + ', ' + esc(catLabel(p.category)) + '</p>' +
@@ -1113,14 +1143,52 @@ fieldset.field{border:0;padding:0;margin:0}
         }
       }, function () { done('Sem conexão. Tente de novo em instantes.'); });
   }
+  function setEditMode(on) {
+    ui.editMode = on;
+    document.documentElement.classList.toggle('editing', on);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-edit]'), function (el) {
+      if (on) {
+        try { el.contentEditable = 'plaintext-only'; } catch (e) { el.contentEditable = 'true'; }
+        if (el.contentEditable !== 'plaintext-only') el.contentEditable = 'true';
+        el.spellcheck = false;
+      } else { el.removeAttribute('contenteditable'); }
+    });
+    renderInfo(); renderEditbar();
+    if (on) toast('Toque em qualquer texto para mudar. Toque numa camisa para editar.');
+  }
+  function renderEditbar() {
+    var bar = $('#editbar');
+    bar.hidden = !ui.canEdit;
+    if (!ui.canEdit) return;
+    bar.innerHTML = ui.editMode ?
+      '<p><b>Editando na tela.</b> Toque nos textos ou nas camisas.</p><button class="btn btn-sm btn-ink" data-action="edit-off">Concluir</button>' :
+      '<button class="btn btn-sm btn-ink" data-action="edit-on">' + I.edit + ' Editar na tela</button><button class="btn btn-sm btn-line" data-action="open-admin">Painel</button>';
+    bar.classList.toggle('on', !!ui.editMode);
+  }
+  document.addEventListener('input', function (e) {
+    var el = e.target.closest && e.target.closest('[data-edit]');
+    if (!el || !ui.editMode) return;
+    var key = el.getAttribute('data-edit'), v = el.textContent.replace(/\s+/g, ' ').trim();
+    if (key === 'announcement') state.settings.announcement = v;
+    else { state.settings.texts = state.settings.texts || {}; state.settings.texts[key] = v; }
+    renderSavebar();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (ui.editMode && e.key === 'Enter' && e.target.closest && e.target.closest('[data-edit]')) { e.preventDefault(); e.target.blur(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (ui.editMode && e.target.closest && e.target.closest('[data-edit]')) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  function draftKey() { var j = JSON.stringify(saved), h = 0; for (var i = 0; i < j.length; i++) h = (h * 31 + j.charCodeAt(i)) | 0; return String(h); }
   function enableStandalone() {
     if (ui.publisher || ui.standalone) return;
     ui.standalone = true; ui.canEdit = true;
+    try { localStorage.setItem('zb-lojista', '1'); } catch (e) {}
     $('#admBtn').hidden = false;
-    var d = null; try { d = localStorage.getItem('zb-rascunho'); } catch (e) {}
-    if (d && d !== JSON.stringify(saved)) { try { state = JSON.parse(d); renderAll(); toast('Recuperamos alterações que você ainda não baixou.'); } catch (e) {} }
-    renderSavebar();
-    renderAdmin(); showDialog($('#admin'));
+    var d = null; try { d = JSON.parse(localStorage.getItem('zb-rascunho') || 'null'); } catch (e) {}
+    if (d && d.base === draftKey() && d.state && JSON.stringify(d.state) !== JSON.stringify(saved)) { state = d.state; renderAll(); toast('Recuperamos alterações que você ainda não publicou.'); }
+    else { try { localStorage.removeItem('zb-rascunho'); } catch (e) {} }
+    renderSavebar(); renderEditbar();
   }
   function publish() {
     if ($('#sWa')) readSettings();
@@ -1164,7 +1232,15 @@ fieldset.field{border:0;padding:0;margin:0}
         ui.cat = 'todos'; ui.q = 'Palmeiras'; $('#q').value = 'Palmeiras'; renderChips(); renderGrid();
         $('#camisas').scrollIntoView({ behavior: 'smooth' }); break;
       case 'quick-add': addToCart(t.getAttribute('data-id'), t.getAttribute('data-size'), 1); toast('Tamanho ' + t.getAttribute('data-size') + ' adicionado à sacola.'); break;
-      case 'open-product': openProduct(t.getAttribute('data-id')); break;
+      case 'open-product':
+        if (ui.editMode) { ui.form = clone(byId(t.getAttribute('data-id'))); if (!ui.form.art) ui.form.art = blankProduct().art; renderAdmin(); showDialog($('#admin')); renderSavebar(); break; }
+        openProduct(t.getAttribute('data-id')); break;
+      case 'edit-on': setEditMode(true); break;
+      case 'edit-off': setEditMode(false); break;
+      case 'leave-admin':
+        try { localStorage.removeItem('zb-lojista'); } catch (e) {}
+        setEditMode(false); ui.canEdit = false; ui.standalone = false; $('#admBtn').hidden = true; closeDialog($('#admin')); renderSavebar(); renderEditbar();
+        toast('Você saiu do modo lojista neste aparelho.'); break;
       case 'close': closeDialog(t.closest('dialog')); break;
       case 'qty': ui.qty = Math.max(1, Math.min(20, ui.qty + dd)); $('#qtyOut').textContent = ui.qty; break;
       case 'to-measures': e.preventDefault(); closeDialog($('#pm')); setTimeout(function () { $('#medidas').scrollIntoView(); }, 50); break;
@@ -1245,7 +1321,10 @@ fieldset.field{border:0;padding:0;margin:0}
   ['pm', 'bag', 'admin', 'igd'].forEach(function (id) { $('#' + id).addEventListener('close', onDialogClose); });
   renderAll();
 
-  function checkAdminHash() { if (location.hash === '#admin') enableStandalone(); }
+  function checkAdminHash() {
+    var mem = false; try { mem = localStorage.getItem('zb-lojista') === '1'; } catch (e) {}
+    if (location.hash === '#admin' || mem) { var first = !ui.standalone; enableStandalone(); if (first && location.hash === '#admin') { renderAdmin(); showDialog($('#admin')); } }
+  }
   if (!(window.claude && typeof window.claude.use === 'function')) {
     window.addEventListener('hashchange', checkAdminHash);
     checkAdminHash();
