@@ -282,6 +282,25 @@ fieldset.field{border:0;padding:0;margin:0}
 .igd textarea{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--well);padding:12px;font:inherit;font-size:.92rem;line-height:1.45;resize:vertical;color:var(--ink)}
 .price .ask{font-size:1rem;color:var(--ink)}
 .bulk{border:1px solid var(--line)!important;border-radius:12px;padding:12px!important}
+
+/* janela da camisa: texto sempre separado da foto */
+.search input{font-size:16px}
+.igd textarea{font-size:16px}
+.pm-img{position:relative;overflow:hidden}
+.pm-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pm-info h2{font-size:clamp(1.45rem,3.2vw,2.1rem);line-height:1.08;letter-spacing:-.015em;padding-right:44px;text-wrap:balance}
+.pm-info .ed{margin:-6px 0 0;font-size:.95rem}
+.pm-price strong{font-size:1.5rem}
+.pm-price strong.ask{font-size:1.15rem;font-weight:700}
+.pm-pay{line-height:1.45}
+.pm .x{background:rgba(20,18,18,.55);border-color:rgba(255,255,255,.25);color:#fff;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+@media (max-width:720px){
+  .pm{max-height:94dvh}
+  .pm-img{height:min(50vh,430px)}
+  .pm-img img{object-fit:contain}
+  .pm-info{position:relative;z-index:1;margin-top:-22px;border-radius:22px 22px 0 0;background:var(--surface);padding:24px 20px calc(26px + env(safe-area-inset-bottom,0px));gap:12px}
+  .pm-info h2{font-size:1.5rem}
+}
 /* ===== Vitrine ===== */
 :root{--display:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;--body:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
   --bg:#FBFAF9;--surface:#FFFFFF;--well:#F1EFEC;--ink:#101012;--ink-2:#64626A;--line:rgba(16,16,18,.1);
@@ -705,7 +724,7 @@ fieldset.field{border:0;padding:0;margin:0}
     $('#pm').innerHTML = '<div class="pm-in"><button class="x" data-action="close" aria-label="Fechar">' + I.close + '</button>' +
       '<div class="pm-img">' + visual(p) + '</div><div class="pm-info">' +
       '<h2>' + esc(p.name) + '</h2>' + (p.edition ? '<p class="ed">' + esc(p.edition) + '</p>' : '') +
-      '<div class="pm-price">' + (hasPrice(p) && p.oldPrice > p.price ? '<s>' + money(p.oldPrice) + '</s>' : '') + '<strong>' + (hasPrice(p) ? money(p.price) : 'Consulte o preço') + '</strong>' + (off ? '<span class="tagoff">-' + off + '%</span>' : '') + '</div>' +
+      '<div class="pm-price">' + (hasPrice(p) && p.oldPrice > p.price ? '<s>' + money(p.oldPrice) + '</s>' : '') + '<strong' + (hasPrice(p) ? '' : ' class="ask"') + '>' + (hasPrice(p) ? money(p.price) : 'Consulte o preço') + '</strong>' + (off ? '<span class="tagoff">-' + off + '%</span>' : '') + '</div>' +
       (pay.length ? '<p class="pm-pay">' + pay.join(' ou ') + '</p>' : (hasPrice(p) ? '' : '<p class="pm-pay">Coloque na sacola ou chame a gente: o valor é informado na conversa.</p>')) +
       (sizes ? '<fieldset class="sizes"><legend>Tamanho <a href="#medidas" data-action="to-measures">Guia de medidas</a></legend><div class="size-opts">' + sizes + '</div></fieldset><p class="hint" id="sizeHint"></p>' : '') +
       (p.soldOut ? '<p class="pm-pay">Esta camisa está esgotada no momento. Chame a gente para saber quando volta.</p>' :
@@ -1122,11 +1141,16 @@ fieldset.field{border:0;padding:0;margin:0}
     var im = e.target;
     if (!im || im.tagName !== 'IMG') return;
     var src = im.getAttribute('src') || '', m;
-    if ((m = src.match(/\/api\/img\?id=([\w-]+)/))) { im.src = 'https://lh3.googleusercontent.com/d/' + m[1] + '=w900'; return; }
-    if ((m = src.match(/lh3\.googleusercontent\.com\/d\/([\w-]+)/))) { im.src = 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w900'; return; }
+    if (!/\/api\/img\?id=/.test(src) && (m = src.match(/lh3\.googleusercontent\.com\/d\/([\w-]+)/)) && !im.getAttribute('data-fb')) { im.setAttribute('data-fb', '1'); im.src = 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w900'; return; }
+    swapBroken(im);
+  }, true);
+  function swapBroken(im) {
     var p = byId(im.getAttribute('data-pid') || '');
     if (p && im.parentNode) { var t = document.createElement('span'); t.innerHTML = shirtSvg(p.art, p.name); im.parentNode.replaceChild(t.firstChild, im); }
-  }, true);
+  }
+  setInterval(function () {
+    Array.prototype.forEach.call(document.querySelectorAll('img[data-pid]'), function (im) { if (im.complete && im.naturalWidth === 0) swapBroken(im); });
+  }, 2500);
 
   /* ---------- início ---------- */
   skeleton();
