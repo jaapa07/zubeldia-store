@@ -304,8 +304,8 @@ fieldset.field{border:0;padding:0;margin:0}
 /* logo no topo */
 .brand{flex-direction:row;gap:10px}
 .brand .brand-word{display:inline-flex;flex-direction:column;align-items:center;line-height:1;font-style:normal}
-.brand-logo{width:46px;height:46px;border-radius:50%;object-fit:cover;flex:none}
-.foot .brand-logo{width:56px;height:56px}
+.brand-logo{width:54px;height:54px;border-radius:50%;object-fit:cover;flex:none}
+.foot .brand-logo{width:72px;height:72px}
 /* edição na tela */
 .editbar{position:fixed;left:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:45;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:0 10px 30px -10px rgba(0,0,0,.35);max-width:calc(100% - 24px)}
 .editbar[hidden]{display:none}
@@ -683,7 +683,8 @@ fieldset.field{border:0;padding:0;margin:0}
     return '<span data-edit="' + key + '">' + esc(t[key] != null && t[key] !== '' ? t[key] : def) + '</span>';
   }
   function brand() {
-    return (validPhoto(state.settings.logo) ? '<img class="brand-logo" src="' + esc(state.settings.logo) + '" alt="">' : '') + '<i class="brand-word"><b>ZUBELDIA</b><span>STORE</span></i>';
+    if (validPhoto(state.settings.logo)) return '<img class="brand-logo" src="' + esc(state.settings.logo) + '" alt="Zubeldia Store">';
+    return '<i class="brand-word"><b>ZUBELDIA</b><span>STORE</span></i>';
   }
 
   function skeleton() {
@@ -944,7 +945,7 @@ fieldset.field{border:0;padding:0;margin:0}
     });
   }
   function productList() {
-    return (ui.standalone ? '<button class="linkbtn leave" data-action="leave-admin">Sair do modo lojista neste aparelho</button>' : '') + '<p class="note">' + (ui.standalone ? 'Suas mudanças aparecem só para você até tocar em Publicar. Depois de publicar, a loja atualiza para todos em cerca de 1 minuto.' : 'Suas mudanças aparecem para você na hora. Os clientes só veem depois que você tocar em Publicar.') + '</p>' +
+    return (ui.standalone ? '<button class="linkbtn leave" data-action="leave-admin">Sair do modo lojista</button>' : '') + '<p class="note">' + (ui.standalone ? 'Suas mudanças aparecem só para você até tocar em Publicar. Depois de publicar, a loja atualiza para todos em cerca de 1 minuto.' : 'Suas mudanças aparecem para você na hora. Os clientes só veem depois que você tocar em Publicar.') + '</p>' +
       '<button class="btn btn-red btn-wide" data-action="new-product">Adicionar camisa</button>' +
       '<ul class="adm-list">' + state.products.map(function (p, k) {
         return '<li class="adm-row"><div class="thumb">' + visual(p) + '</div><div><h3>' + esc(p.name) + '</h3><p>' + priceLabel(p) + ', ' + esc(catLabel(p.category)) + '</p>' +
@@ -1183,7 +1184,6 @@ fieldset.field{border:0;padding:0;margin:0}
   function enableStandalone() {
     if (ui.publisher || ui.standalone) return;
     ui.standalone = true; ui.canEdit = true;
-    try { localStorage.setItem('zb-lojista', '1'); } catch (e) {}
     $('#admBtn').hidden = false;
     var d = null; try { d = JSON.parse(localStorage.getItem('zb-rascunho') || 'null'); } catch (e) {}
     if (d && d.base === draftKey() && d.state && JSON.stringify(d.state) !== JSON.stringify(saved)) { state = d.state; renderAll(); toast('Recuperamos alterações que você ainda não publicou.'); }
@@ -1240,7 +1240,8 @@ fieldset.field{border:0;padding:0;margin:0}
       case 'leave-admin':
         try { localStorage.removeItem('zb-lojista'); } catch (e) {}
         setEditMode(false); ui.canEdit = false; ui.standalone = false; $('#admBtn').hidden = true; closeDialog($('#admin')); renderSavebar(); renderEditbar();
-        toast('Você saiu do modo lojista neste aparelho.'); break;
+        try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+        toast('Você saiu do modo lojista.'); break;
       case 'close': closeDialog(t.closest('dialog')); break;
       case 'qty': ui.qty = Math.max(1, Math.min(20, ui.qty + dd)); $('#qtyOut').textContent = ui.qty; break;
       case 'to-measures': e.preventDefault(); closeDialog($('#pm')); setTimeout(function () { $('#medidas').scrollIntoView(); }, 50); break;
@@ -1322,8 +1323,8 @@ fieldset.field{border:0;padding:0;margin:0}
   renderAll();
 
   function checkAdminHash() {
-    var mem = false; try { mem = localStorage.getItem('zb-lojista') === '1'; } catch (e) {}
-    if (location.hash === '#admin' || mem) { var first = !ui.standalone; enableStandalone(); if (first && location.hash === '#admin') { renderAdmin(); showDialog($('#admin')); } }
+    try { localStorage.removeItem('zb-lojista'); } catch (e) {}
+    if (location.hash === '#admin' && !ui.standalone) { enableStandalone(); renderAdmin(); showDialog($('#admin')); }
   }
   if (!(window.claude && typeof window.claude.use === 'function')) {
     window.addEventListener('hashchange', checkAdminHash);
